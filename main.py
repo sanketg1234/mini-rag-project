@@ -1,6 +1,7 @@
 import os
 import requests
 import json
+from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
@@ -9,6 +10,7 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
 
+load_dotenv()
 # --- 1. API Setup ---
 app = FastAPI()
 
@@ -36,7 +38,7 @@ vector_store = FAISS.from_documents(chunks, embedding_model)
 retriever = vector_store.as_retriever(search_kwargs={"k": 3})
 print("RAG Pipeline Ready!")
 
-OPENROUTER_API_KEY = "YOUR_OPENROUTER_API_KEY" # Put your key here!
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 
 # --- 3. The Chat Endpoint ---
 @app.post("/chat")
@@ -82,14 +84,16 @@ async def chat_endpoint(request: ChatRequest):
 
         if response.status_code == 200:
             answer = response.json()['choices'][0]['message']['content']
-            # Return BOTH the answer and the context arrays to satisfy the UI transparency requirement
             return {"answer": answer, "context": contexts}
         else:
+            # ADD THIS PRINT STATEMENT to see what OpenRouter is complaining about
+            print(f"OpenRouter Error: {response.text}") 
             raise HTTPException(status_code=500, detail="Error communicating with LLM")
 
     except Exception as e:
+        # ADD THIS PRINT STATEMENT to catch any other Python crashes
+        print(f"Python Error: {str(e)}") 
         raise HTTPException(status_code=500, detail=str(e))
-
 # To run this server from the terminal:
 if __name__ == "__main__":
     import uvicorn
