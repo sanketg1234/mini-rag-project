@@ -10,7 +10,10 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
 
-load_dotenv()
+
+basedir = os.path.abspath(os.path.dirname(__file__))
+load_dotenv(os.path.join(basedir, '.env'))
+
 # --- 1. API Setup ---
 app = FastAPI()
 
@@ -39,6 +42,15 @@ retriever = vector_store.as_retriever(search_kwargs={"k": 3})
 print("RAG Pipeline Ready!")
 
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
+
+if not OPENROUTER_API_KEY or OPENROUTER_API_KEY == "your_key_here":
+    print("\n" + "!"*50)
+    print("CRITICAL ERROR: API KEY NOT LOADED!")
+    print(f"Looking for .env at: {os.path.join(basedir, '.env')}")
+    print("Check your .env file name and content.")
+    print("!"*50 + "\n")
+else:
+    print(f"\n✅ API Key Loaded Successfully (Starts with: {OPENROUTER_API_KEY[:8]})\n")
 
 # --- 3. The Chat Endpoint ---
 @app.post("/chat")
@@ -70,16 +82,19 @@ async def chat_endpoint(request: ChatRequest):
         Answer:"""
 
         # Call the LLM
+        if not OPENROUTER_API_KEY or OPENROUTER_API_KEY == "your_key_here":
+            raise HTTPException(status_code=500, detail="OpenRouter API key is not configured")
+
         response = requests.post(
             url="https://openrouter.ai/api/v1/chat/completions",
             headers={
-                "Authorization": f"Bearer {"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"}",
+                "Authorization": f"Bearer {OPENROUTER_API_KEY}",
                 "Content-Type": "application/json"
             },
             data=json.dumps({
-                "model": "openrouter/free", 
-                "messages": [{"role": "user", "content": prompt}]
-            })
+        "model": "openrouter/free", # This automatically finds an active free model
+        "messages": [{"role": "user", "content": prompt}]
+    })
         )
 
         if response.status_code == 200:
