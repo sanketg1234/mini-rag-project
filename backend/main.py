@@ -7,7 +7,7 @@ from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from langchain_community.document_loaders import DirectoryLoader, TextLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_community.embeddings import HuggingFaceInferenceAPIEmbeddings
 from langchain_community.vectorstores import FAISS
 
 
@@ -36,7 +36,10 @@ documents = loader.load()
 text_splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50, separators=["\n\n", "\n", ".", " ", ""])
 chunks = text_splitter.split_documents(documents)
 
-embedding_model = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+embedding_model = HuggingFaceInferenceAPIEmbeddings(
+    api_key=os.environ.get("HF_TOKEN"),
+    model_name="sentence-transformers/all-MiniLM-L6-v2"
+)
 vector_store = FAISS.from_documents(chunks, embedding_model)
 retriever = vector_store.as_retriever(search_kwargs={"k": 3})
 print("RAG Pipeline Ready!")
