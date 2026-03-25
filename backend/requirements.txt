@@ -4,7 +4,5 @@ python-dotenv
 langchain
 langchain-community
 langchain-huggingface
+sentence-transformers --no-cache-dir
 faiss-cpu
-requests
-sentence-transformers
-transformers
