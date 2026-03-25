@@ -1,4 +1,5 @@
 import os
+from langchain_huggingface import HuggingFaceEndpointEmbeddings
 import requests
 import json
 from dotenv import load_dotenv
@@ -36,11 +37,21 @@ documents = loader.load()
 text_splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50, separators=["\n\n", "\n", ".", " ", ""])
 chunks = text_splitter.split_documents(documents)
 
-embedding_model = HuggingFaceInferenceAPIEmbeddings(
-    api_key=os.environ.get("HF_TOKEN"),
-    model_name="sentence-transformers/all-MiniLM-L6-v2"
+hf_token = os.environ.get("HF_TOKEN")
+if not hf_token:
+    raise ValueError("HF_TOKEN is missing! Please check your .env file.")
+
+embedding_model = HuggingFaceEndpointEmbeddings(
+    model="sentence-transformers/all-MiniLM-L6-v2",
+    huggingfacehub_api_token=os.environ.get("HF_TOKEN")
 )
-vector_store = FAISS.from_documents(chunks, embedding_model)
+print("Loading FAISS index...")
+vector_store = FAISS.load_local(
+    "faiss_index", 
+    embedding_model, 
+    allow_dangerous_deserialization=True # Required by FAISS to load local files
+)
+print("FAISS index loaded successfully!")
 retriever = vector_store.as_retriever(search_kwargs={"k": 3})
 print("RAG Pipeline Ready!")
 
