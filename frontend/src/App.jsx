@@ -17,7 +17,7 @@ function App() {
 
     try {
       // Call your running Python FastAPI backend
-      const response = await axios.post('http://localhost:8000/chat', {
+      const response = await axios.post('https://mini-rag-project-fwkn.onrender.com/ask', {
         query: userMessage.content,
       });
 

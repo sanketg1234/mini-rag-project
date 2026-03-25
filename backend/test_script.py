@@ -31,9 +31,14 @@ print("Loading embedding model...")
 embedding_model = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
 
 # --- STEP 4 & 5: Build FAISS Index and Set up Retriever ---
+# --- STEP 4 & 5: Build FAISS Index and Set up Retriever ---
 print("Building the FAISS vector index...")
 vector_store = FAISS.from_documents(chunks, embedding_model)
 print("Vector index built successfully!")
+
+# ADD THESE TWO LINES TO SAVE IT TO YOUR COMPUTER:
+vector_store.save_local("faiss_index")
+print("✅ Saved FAISS index locally to the 'faiss_index' folder!")
 
 # We configure it to return the top 3 most relevant chunks (k=3)
 retriever = vector_store.as_retriever(search_kwargs={"k": 3})
