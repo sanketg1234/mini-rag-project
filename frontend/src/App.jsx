@@ -16,7 +16,6 @@ function App() {
     setIsLoading(true);
 
     try {
-      // Call your running Python FastAPI backend
       const response = await axios.post("https://mini-rag-project-fwkn.onrender.com/chat", {
         query: userMessage.content,
       });
@@ -24,7 +23,7 @@ function App() {
       const aiMessage = {
         role: 'ai',
         content: response.data.answer,
-        context: response.data.context, // The retrieved document chunks
+        context: response.data.context, 
       };
 
       setMessages((prev) => [...prev, aiMessage]);
@@ -47,12 +46,12 @@ function App() {
           messages.map((msg, index) => (
             <div key={index} style={{ marginBottom: '20px', textAlign: msg.role === 'user' ? 'right' : 'left' }}>
               
-              {/* Message Bubble */}
+              {}
               <div style={{ display: 'inline-block', padding: '10px 15px', borderRadius: '15px', backgroundColor: msg.role === 'user' ? '#007bff' : '#e0e0e0', color: msg.role === 'user' ? '#fff' : '#000', maxWidth: '80%' }}>
                 {msg.content}
               </div>
 
-              {/* Context Display (Mandatory Transparency Requirement) */}
+              {}
               {msg.context && (
                 <div style={{ marginTop: '10px', fontSize: '0.85em', color: '#555', backgroundColor: '#fff', padding: '10px', border: '1px solid #ddd', borderRadius: '5px', textAlign: 'left' }}>
                   <strong>Retrieved Context:</strong>

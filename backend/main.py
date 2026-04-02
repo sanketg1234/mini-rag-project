@@ -15,14 +15,12 @@ from langchain_community.vectorstores import FAISS
 basedir = os.path.abspath(os.path.dirname(__file__))
 load_dotenv(os.path.join(basedir, '.env'))
 
-# --- 1. API Setup ---
 app = FastAPI()
 
-# Allow our React frontend to talk to this backend
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True, # In production, you'd lock this down to your frontend's URL
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -30,7 +28,6 @@ app.add_middleware(
 class ChatRequest(BaseModel):
     query: str
 
-# --- 2. Build the RAG Index on Startup ---
 print("Initializing RAG Pipeline...")
 loader = DirectoryLoader("data/", glob="**/*.md", loader_cls=TextLoader, loader_kwargs={"encoding": "utf-8"})
 documents = loader.load()
@@ -50,7 +47,7 @@ print("Loading FAISS index...")
 vector_store = FAISS.load_local(
     "faiss_index", 
     embedding_model, 
-    allow_dangerous_deserialization=True # Required by FAISS to load local files
+    allow_dangerous_deserialization=True
 )
 print("FAISS index loaded successfully!")
 retriever = vector_store.as_retriever(search_kwargs={"k": 3})
@@ -67,14 +64,11 @@ if not OPENROUTER_API_KEY or OPENROUTER_API_KEY == "your_key_here":
 else:
     print(f"\n✅ API Key Loaded Successfully (Starts with: {OPENROUTER_API_KEY[:8]})\n")
 
-# --- 3. The Chat Endpoint ---
 @app.post("/chat")
 async def chat_endpoint(request: ChatRequest):
     try:
-        # Fetch relevant chunks
         retrieved_docs = retriever.invoke(request.query)
         
-        # Format the context to send back to the frontend AND to the LLM
         contexts = []
         context_text_for_llm = ""
         for doc in retrieved_docs:
@@ -83,8 +77,7 @@ async def chat_endpoint(request: ChatRequest):
             contexts.append({"source": source, "content": content})
             context_text_for_llm += f"\nSource: {source}\nContent: {content}\n"
 
-        # Create the prompt
-      # Create the prompt
+
         prompt = f"""You are an AI assistant for a construction marketplace.
         Answer the user's question using ONLY the context provided below.
         You are allowed to synthesize the provided bullet points to directly answer the query. 
@@ -96,7 +89,6 @@ async def chat_endpoint(request: ChatRequest):
         Question: {request.query}
         Answer:"""
 
-        # Call the LLM
         if not OPENROUTER_API_KEY or OPENROUTER_API_KEY == "your_key_here":
             raise HTTPException(status_code=500, detail="OpenRouter API key is not configured")
 
@@ -107,7 +99,7 @@ async def chat_endpoint(request: ChatRequest):
                 "Content-Type": "application/json"
             },
             data=json.dumps({
-        "model": "openrouter/free", # This automatically finds an active free model
+        "model": "openrouter/free",l
         "messages": [{"role": "user", "content": prompt}]
     })
         )
@@ -116,15 +108,12 @@ async def chat_endpoint(request: ChatRequest):
             answer = response.json()['choices'][0]['message']['content']
             return {"answer": answer, "context": contexts}
         else:
-            # ADD THIS PRINT STATEMENT to see what OpenRouter is complaining about
             print(f"OpenRouter Error: {response.text}") 
             raise HTTPException(status_code=500, detail="Error communicating with LLM")
 
     except Exception as e:
-        # ADD THIS PRINT STATEMENT to catch any other Python crashes
         print(f"Python Error: {str(e)}") 
         raise HTTPException(status_code=500, detail=str(e))
-# To run this server from the terminal:
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
