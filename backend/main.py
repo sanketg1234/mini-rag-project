@@ -99,7 +99,7 @@ async def chat_endpoint(request: ChatRequest):
                 "Content-Type": "application/json"
             },
             data=json.dumps({
-        "model": "openrouter/free",l
+        "model": "openrouter/free",
         "messages": [{"role": "user", "content": prompt}]
     })
         )
