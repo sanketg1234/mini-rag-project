@@ -29,6 +29,3 @@ Grounding is strictly enforced through Prompt Engineering. The LLM is wrapped in
 1. Answer the question using ONLY the provided context.
 2. Say "I do not have enough information..." if the context does not contain the answer.
 This completely prevents the model from relying on its general training data.
-
-## 📊 Quality Analysis (Optional Bonus)
-*Note: Include a brief summary here if you decide to test 8-15 questions and evaluate the system's hallucinations and retrieval accuracy!*
